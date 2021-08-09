@@ -83,7 +83,6 @@ class ImportBVHForSMPLX(bpy.types.Operator, ImportHelper):
         description="Import target type",
         default='NEW ARMATURE',
     )
-
     global_scale: FloatProperty(
         name="Scale",
         description="Scale the BVH by this value",
@@ -139,7 +138,16 @@ class ImportBVHForSMPLX(bpy.types.Operator, ImportHelper):
         ),
         default='NATIVE',
     )
-
+    translation_mode: EnumProperty(
+        name="Translation",
+        description="How to deal with translation",
+        items=(
+            ('TRANSLATION_FOR_ALL_BONES', "All bones", "Load translation for all bones"),
+            ('TRANSLATION_FOR_ROOT_BONE', "Only root", "Only load translation for root bone"),
+            ('TRANSLATION_FOR_NONE_BONE', "None", "Discard translation for all bones"),
+        ),
+        default='TRANSLATION_FOR_ALL_BONES',
+    )
     def execute(self, context):
         # print('--> in ImportBVHForSMPLX.execute()')
 
@@ -245,6 +253,7 @@ class BVH_SMPLX_PT_import_transform(bpy.types.Panel):
         layout.prop(operator, "rotate_mode")
         layout.prop(operator, "axis_forward")
         layout.prop(operator, "axis_up")
+        layout.prop(operator, "translation_mode")
 
 
 class BVH_SMPLX_PT_import_animation(bpy.types.Panel):

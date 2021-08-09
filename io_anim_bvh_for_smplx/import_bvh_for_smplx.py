@@ -25,7 +25,7 @@ from math import radians, ceil
 
 import bpy
 from mathutils import Vector, Euler, Matrix
-
+import math
 
 class BVH_Node:
     __slots__ = (
@@ -358,6 +358,7 @@ def bvh_node_dict2armature(
         IMPORT_LOOP=False,
         global_matrix=None,
         use_fps_scale=False,
+        translation_mode='TRANSLATION_FOR_ALL_BONES',
 ):
 
     if frame_start < 1:
@@ -452,6 +453,8 @@ def bvh_node_dict2armature(
     pose = arm_ob.pose
     pose_bones = pose.bones
 
+    root_bone_name = pose_bones[0].name
+
     if rotate_mode == 'NATIVE':
         for bvh_node in bvh_nodes_list:
             # may not be the same name as the bvh_node, could have been shortened.
@@ -487,7 +490,7 @@ def bvh_node_dict2armature(
 
         bone_rest_matrix_inv.resize_4x4()
         bone_rest_matrix.resize_4x4()
-        bvh_node.temp = (pose_bone, bone, bone_rest_matrix,
+        bvh_node.temp = (pose_bone, rest_bone, bone_rest_matrix,
                          bone_rest_matrix_inv)
 
         if 0 == num_frame:
@@ -514,9 +517,13 @@ def bvh_node_dict2armature(
     #      % (bvh_frame_time, dt, num_frame]))
 
     for i, bvh_node in enumerate(bvh_nodes_list):
-        pose_bone, bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
+        pose_bone, rest_bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
 
-        if bvh_node.has_loc:
+        skip_loc = (translation_mode == 'TRANSLATION_FOR_NONE_BONE')  or \
+            (translation_mode == 'TRANSLATION_FOR_ROOT_BONE' and pose_bone.name != root_bone_name)
+
+        if bvh_node.has_loc and not skip_loc:
+        # if bvh_node.has_loc:
             # Not sure if there is a way to query this or access it in the
             # PoseBone structure.
             data_path = 'pose.bones["%s"].location' % pose_bone.name
@@ -560,13 +567,16 @@ def bvh_node_dict2armature(
                 bvh_rot = bvh_node.anim_data[frame_i + skip_frame][3:]
 
                 # print('='*32)
-                # print('bvh_node.rot_order_str: ', bvh_node.rot_order_str)
-                # print('bvh_node.rot_order_str[::-1]:',
+                # print('---> bvh_node.rot_order_str: ', bvh_node.rot_order_str)
+                # print('---> bvh_node.rot_order_str[::-1]:',
                 #       bvh_node.rot_order_str[::-1])
 
                 # apply rotation order and convert to XYZ
                 # note that the rot_order_str is reversed.
                 euler = Euler(bvh_rot, bvh_node.rot_order_str[::-1])
+                # print('---> euler: ', euler)
+                # print("---> %.2f, %.2f, %.2f" % tuple(math.degrees(a) for a in euler))
+
                 bone_rotation_matrix = euler.to_matrix().to_4x4()
                 bone_rotation_matrix = (
                     bone_rest_matrix_inv @
@@ -574,7 +584,7 @@ def bvh_node_dict2armature(
                     bone_rest_matrix
                 )
 
-                # print('len(rotate[frame_i]): ', len(rotate[frame_i]))
+                # print('---> len(rotate[frame_i]): ', len(rotate[frame_i]))
 
                 if len(rotate[frame_i]) == 4:
                     rotate[frame_i] = bone_rotation_matrix.to_quaternion()
@@ -582,6 +592,8 @@ def bvh_node_dict2armature(
                     rotate[frame_i] = bone_rotation_matrix.to_euler(
                         pose_bone.rotation_mode, prev_euler)
                     prev_euler = rotate[frame_i]
+                    # print('---> converted euler: ', rotate[frame_i])
+                    # print("---> %.2f, %.2f, %.2f" % tuple(math.degrees(a) for a in rotate[frame_i]))
 
             # For each euler angle x, y, z (or quaternion w, x, y, z).
             for axis_i in range(len(rotate[0])):
@@ -604,6 +616,7 @@ def bvh_node_dict2armature(
 
     # finally apply matrix
     arm_ob.matrix_world = global_matrix
+    # print('===> global_matrix: ', global_matrix)
     bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
     return arm_ob
@@ -620,6 +633,7 @@ def bvh_node_dict2existing_armature(
         IMPORT_LOOP=False,
         global_matrix=None,
         use_fps_scale=False,
+        translation_mode='TRANSLATION_FOR_ALL_BONES',
 ):
 
     if frame_start < 1:
@@ -649,6 +663,10 @@ def bvh_node_dict2existing_armature(
 
     pose = arm_ob.pose
     pose_bones = pose.bones
+
+    root_bone_name = pose_bones[0].name
+
+    # print('---> rotate_mode: ', rotate_mode)
 
     if rotate_mode == 'NATIVE':
         # for bvh_node in bvh_nodes_list:
@@ -711,17 +729,27 @@ def bvh_node_dict2existing_armature(
     # print("bvh_frame_time = %f, dt = %f, num_frame = %d"
     #      % (bvh_frame_time, dt, num_frame]))
 
+    global_matrix_3x3 = global_matrix.to_3x3()
+    global_matrix_inv = global_matrix.inverted()
+
     for i, bvh_node in enumerate(bvh_nodes_list):
         pose_bone, rest_bone, bone_rest_matrix, bone_rest_matrix_inv = bvh_node.temp
 
-        if bvh_node.has_loc:
+        skip_loc = (translation_mode == 'TRANSLATION_FOR_NONE_BONE')  or \
+            (translation_mode == 'TRANSLATION_FOR_ROOT_BONE' and pose_bone.name != root_bone_name)
+
+        if bvh_node.has_loc and not skip_loc:
             # Not sure if there is a way to query this or access it in the
             # PoseBone structure.
             data_path = 'pose.bones["%s"].location' % pose_bone.name
+            # print('---> ', data_path)
 
             location = [(0.0, 0.0, 0.0)] * num_frame
             for frame_i in range(num_frame):
                 bvh_loc = bvh_node.anim_data[frame_i + skip_frame][:3]
+
+                # convert translation data into blender's coordinate systems (Z-up/Y-forward/X-right) 
+                bvh_loc = global_matrix_3x3 @ Vector(bvh_loc)
 
                 bone_translate_matrix = Matrix.Translation(
                     Vector(bvh_loc) - bvh_node.rest_head_local)
@@ -754,25 +782,44 @@ def bvh_node_dict2existing_armature(
                              pose_bone.name)
 
             prev_euler = Euler((0.0, 0.0, 0.0))
+
+            # backup
+            bone_rest_matrix_bk = bone_rest_matrix.copy()
+            bone_rest_matrix_inv_bk = bone_rest_matrix_inv.copy()
+
+            # [comment-fusion]
+            # compensate for the global_matrix to convert rotation data into blender's coordinate systems (Z-up/Y-forward/X-right) 
+            bone_rest_matrix_inv = bone_rest_matrix_inv @ global_matrix
+            bone_rest_matrix = global_matrix_inv @ bone_rest_matrix
+
             for frame_i in range(num_frame):
                 bvh_rot = bvh_node.anim_data[frame_i + skip_frame][3:]
 
                 # apply rotation order and convert to XYZ
                 # note that the rot_order_str is reversed.
                 # print('='*32)
-                # print('bvh_node.rot_order_str: ', bvh_node.rot_order_str)
-                # print('bvh_node.rot_order_str[::-1]:',
+                # print('---> bvh_node.rot_order_str: ', bvh_node.rot_order_str)
+                # print('---> bvh_node.rot_order_str[::-1]:',
                 #       bvh_node.rot_order_str[::-1])
+
                 euler = Euler(bvh_rot, bvh_node.rot_order_str[::-1])
 
-                bone_rotation_matrix = euler.to_matrix().to_4x4()
-                # bone_rotation_matrix = (
-                #     bone_rest_matrix_inv @
-                #     bone_rotation_matrix @
-                #     bone_rest_matrix
-                # )
+                # print('---> euler: ', euler)
+                # print("---> %.2f, %.2f, %.2f" % tuple(math.degrees(a) for a in euler))
 
-                # print('len(rotate[frame_i]): ', len(rotate[frame_i]))
+                bone_rotation_matrix = euler.to_matrix().to_4x4()
+
+                # convert rotation data into blender's coordinate systems (Z-up/Y-forward/X-right), 
+                # fused into bone_rest_matrix and bone_rest_matrix_inv, see the above: [comment-fusion]
+                # bone_rotation_matrix = global_matrix @ bone_rotation_matrix @ global_matrix_inv
+
+                bone_rotation_matrix = (
+                    bone_rest_matrix_inv @
+                    bone_rotation_matrix @
+                    bone_rest_matrix
+                )
+
+                # print('---> len(rotate[frame_i]): ', len(rotate[frame_i]))
 
                 if len(rotate[frame_i]) == 4:
                     rotate[frame_i] = bone_rotation_matrix.to_quaternion()
@@ -780,6 +827,10 @@ def bvh_node_dict2existing_armature(
                     rotate[frame_i] = bone_rotation_matrix.to_euler(
                         pose_bone.rotation_mode, prev_euler)
                     prev_euler = rotate[frame_i]
+                    
+                    # print('---> converted euler: ', rotate[frame_i])
+                    # print("%.2f, %.2f, %.2f" % tuple(math.degrees(a) for a in rotate[frame_i]))
+
 
             # For each euler angle x, y, z (or quaternion w, x, y, z).
             for axis_i in range(len(rotate[0])):
@@ -793,6 +844,9 @@ def bvh_node_dict2existing_armature(
                         rotate[frame_i][axis_i],
                     )
 
+            bone_rest_matrix = bone_rest_matrix_bk
+            bone_rest_matrix_inv = bone_rest_matrix_inv_bk
+
     for cu in action.fcurves:
         if IMPORT_LOOP:
             pass  # 2.5 doenst have cyclic now?
@@ -802,7 +856,8 @@ def bvh_node_dict2existing_armature(
 
     # finally apply matrix
     # arm_ob.matrix_world = global_matrix
-    bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
+    # print('===> global_matrix: ', global_matrix)    
+    # bpy.ops.object.transform_apply(location=False, rotation=True, scale=False)
 
     return arm_ob
 
@@ -821,6 +876,7 @@ def load(
         update_scene_fps=False,
         update_scene_duration=False,
         report=print,
+        translation_mode='TRANSLATION_FOR_ALL_BONES',
 ):
     import time
     t1 = time.time()
@@ -873,6 +929,7 @@ def load(
             IMPORT_LOOP=use_cyclic,
             global_matrix=global_matrix,
             use_fps_scale=use_fps_scale,
+            translation_mode=translation_mode,
         )
 
     elif target in bpy.data.objects.keys():
@@ -883,6 +940,7 @@ def load(
             IMPORT_LOOP=use_cyclic,
             global_matrix=global_matrix,
             use_fps_scale=use_fps_scale,
+            translation_mode=translation_mode,
         )
 
     else:
