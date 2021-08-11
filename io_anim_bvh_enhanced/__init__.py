@@ -36,12 +36,12 @@ from bpy.props import (
 )
 import bpy
 bl_info = {
-    "name": "BioVision Motion Capture (BVH) format for SMPL/SMPL-X",
+    "name": "BioVision Motion Capture (BVH) format, enhanced version",
     "author": "Yafei Zhao",
     "version": (1, 0, 0),
     "blender": (2, 81, 6),
     "location": "File > Import-Export",
-    "description": "Import BVH onto SMPL/SMPL-X armature objects",
+    "description": "Import BVH, support load onto an existing armature",
     "warning": "",
     "doc_url": "{BLENDER_MANUAL_URL}/addons/import_export/anim_bvh.html",
     "support": 'OFFICIAL',
@@ -50,17 +50,17 @@ bl_info = {
 
 if "bpy" in locals():
     import importlib
-    if "import_bvh_for_smplx" in locals():
-        importlib.reload(import_bvh_for_smplx)
+    if "import_bvh_enhanced" in locals():
+        importlib.reload(import_bvh_enhanced)
     # if "export_bvh" in locals():
     #     importlib.reload(export_bvh)
 
 
 @orientation_helper(axis_forward='-Z', axis_up='Y')
-class ImportBVHForSMPLX(bpy.types.Operator, ImportHelper):
+class ImportBVHEnhanced(bpy.types.Operator, ImportHelper):
     """Load a BVH motion capture file"""
-    bl_idname = "import_anim.bvh_for_smplx"
-    bl_label = "Import BVH For SMPL/SMPL-x"
+    bl_idname = "import_anim.bvh_enhanced"
+    bl_label = "Import BVH"
     bl_options = {'REGISTER', 'UNDO'}
 
     filename_ext = ".bvh"
@@ -149,7 +149,7 @@ class ImportBVHForSMPLX(bpy.types.Operator, ImportHelper):
         default='TRANSLATION_FOR_ALL_BONES',
     )
     def execute(self, context):
-        # print('--> in ImportBVHForSMPLX.execute()')
+        # print('--> in ImportBVHEnhanced.execute()')
 
         keywords = self.as_keywords(
             ignore=(
@@ -165,16 +165,16 @@ class ImportBVHForSMPLX(bpy.types.Operator, ImportHelper):
 
         keywords["global_matrix"] = global_matrix
 
-        from . import import_bvh_for_smplx
-        return import_bvh_for_smplx.load(context, report=self.report, **keywords)
+        from . import import_bvh_enhanced
+        return import_bvh_enhanced.load(context, report=self.report, **keywords)
 
     def draw(self, context):
-        # print('--> in ImportBVHForSMPLX.draw()')
+        # print('--> in ImportBVHEnhanced.draw()')
 
         pass
 
 
-class BVH_SMPLX_PT_import_main(bpy.types.Panel):
+class BVH_ENHANCED_PT_import_main(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = ""
@@ -186,11 +186,11 @@ class BVH_SMPLX_PT_import_main(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        # print('--> in BVH_SMPLX_PT_import_main.poll()')
+        # print('--> in BVH_ENHANCED_PT_import_main.poll()')
         # print(operator)
         # print(operator.bl_idname)
 
-        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_for_smplx"
+        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_enhanced"
 
     def draw(self, context):
         layout = self.layout
@@ -224,7 +224,7 @@ class BVH_SMPLX_PT_import_main(bpy.types.Panel):
         layout.prop(operator, "target")
 
 
-class BVH_SMPLX_PT_import_transform(bpy.types.Panel):
+class BVH_ENHANCED_PT_import_transform(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Transform"
@@ -235,11 +235,11 @@ class BVH_SMPLX_PT_import_transform(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        # print('--> in BVH_SMPLX_PT_import_transform.poll()')
+        # print('--> in BVH_ENHANCED_PT_import_transform.poll()')
         # print(operator)
         # print(operator.bl_idname)
 
-        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_for_smplx"
+        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_enhanced"
 
     def draw(self, context):
         layout = self.layout
@@ -256,7 +256,7 @@ class BVH_SMPLX_PT_import_transform(bpy.types.Panel):
         layout.prop(operator, "translation_mode")
 
 
-class BVH_SMPLX_PT_import_animation(bpy.types.Panel):
+class BVH_ENHANCED_PT_import_animation(bpy.types.Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Animation"
@@ -267,11 +267,11 @@ class BVH_SMPLX_PT_import_animation(bpy.types.Panel):
         sfile = context.space_data
         operator = sfile.active_operator
 
-        # print('--> in BVH_SMPLX_PT_import_animation.poll()')
+        # print('--> in BVH_ENHANCED_PT_import_animation.poll()')
         # print(operator)
         # print(operator.bl_idname)
 
-        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_for_smplx"
+        return operator.bl_idname == "IMPORT_ANIM_OT_bvh_enhanced"
 
     def draw(self, context):
         layout = self.layout
@@ -370,7 +370,7 @@ class BVH_SMPLX_PT_import_animation(bpy.types.Panel):
 #         pass
 
 
-# class BVH_SMPLX_PT_export_transform(bpy.types.Panel):
+# class BVH_ENHANCED_PT_export_transform(bpy.types.Panel):
 #     bl_space_type = 'FILE_BROWSER'
 #     bl_region_type = 'TOOL_PROPS'
 #     bl_label = "Transform"
@@ -396,7 +396,7 @@ class BVH_SMPLX_PT_import_animation(bpy.types.Panel):
 #         layout.prop(operator, "root_transform_only")
 
 
-# class BVH_SMPLX_PT_export_animation(bpy.types.Panel):
+# class BVH_ENHANCED_PT_export_animation(bpy.types.Panel):
 #     bl_space_type = 'FILE_BROWSER'
 #     bl_region_type = 'TOOL_PROPS'
 #     bl_label = "Animation"
@@ -423,7 +423,7 @@ class BVH_SMPLX_PT_import_animation(bpy.types.Panel):
 
 
 def menu_func_import(self, context):
-    self.layout.operator(ImportBVHForSMPLX.bl_idname,
+    self.layout.operator(ImportBVHEnhanced.bl_idname,
                          text="Motion Capture (.bvh) for SMPL/SMPLX")
 
 
@@ -432,13 +432,13 @@ def menu_func_import(self, context):
 
 
 classes = (
-    ImportBVHForSMPLX,
-    BVH_SMPLX_PT_import_main,
-    BVH_SMPLX_PT_import_transform,
-    BVH_SMPLX_PT_import_animation,
+    ImportBVHEnhanced,
+    BVH_ENHANCED_PT_import_main,
+    BVH_ENHANCED_PT_import_transform,
+    BVH_ENHANCED_PT_import_animation,
     # ExportBVH,
-    # BVH_SMPLX_PT_export_transform,
-    # BVH_SMPLX_PT_export_animation,
+    # BVH_ENHANCED_PT_export_transform,
+    # BVH_ENHANCED_PT_export_animation,
 )
 
 
