@@ -24,13 +24,13 @@
 bl_info = {
     "name": "BioVision Motion Capture (BVH) format, support more settings",
     "author": "Yafei Zhao",
-    "version": (1, 0, 0),
-    "blender": (2, 92, 0),
+    "version": (2, 0, 0),
+    "blender": (2, 81, 6),
     "location": "File > Import-Export",
     "description": "Import-Export BVH from armature objects, support more settings",
     "warning": "",
     "doc_url": "https://github.com/walkoncross/blender_bvh_addon_enhanced/blob/main/README.md",
-    "support": 'Indie',
+    "support": 'OFFICIAL',
     "category": "Import-Export",
 }
 
