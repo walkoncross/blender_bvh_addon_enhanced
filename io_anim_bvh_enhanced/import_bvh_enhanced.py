@@ -436,8 +436,8 @@ def bvh_node_dict2objects(
 
                 if bvh_node.has_loc and not skip_loc:
                 # if bvh_node.has_loc:
-                    obj.delta_location = global_matrix_3x3 @ (Vector((lx, ly, lz)) - bvh_node.rest_head_world)
-                    obj.keyframe_insert("delta_location", index=-1, frame=frame_start +             frame_current)
+                    obj.delta_location = global_matrix_3x3 @ (Vector((lx, ly, lz)) - bvh_node.rest_head_local)
+                    obj.keyframe_insert("delta_location", index=-1, frame=frame_start + frame_current)
 
                 if bvh_node.has_rot:
                     euler_orig = Euler((rx, ry, rz), obj.rotation_mode)
@@ -463,7 +463,6 @@ def bvh_node_dict2objects(
 
         for name, bvh_node in bvh_nodes.items():
             obj = bvh_node.temp
-
             skip_loc = (translation_mode == 'TRANSLATION_FOR_NONE_BONE')  or \
                 (translation_mode == 'TRANSLATION_FOR_ROOT_BONE' and bvh_node.name != root_bone_name)
 
@@ -473,7 +472,11 @@ def bvh_node_dict2objects(
 
                 if bvh_node.has_loc and not skip_loc:
                 # if bvh_node.has_loc:
-                    obj.delta_location = Vector((lx, ly, lz)) - bvh_node.rest_head_world
+                    # print('--> name: ', name)
+                    # print('--> bvh_node.rest_head_world: ', bvh_node.rest_head_world)
+                    # print('--> bvh_node.rest_head_local: ', bvh_node.rest_head_local)
+                    obj.delta_location = Vector((lx, ly, lz)) - bvh_node.rest_head_local
+                    # print('--> obj.delta_location: ', obj.delta_location)
                     obj.keyframe_insert("delta_location", index=-1, frame=frame_start + frame_current)
 
                 if bvh_node.has_rot:
