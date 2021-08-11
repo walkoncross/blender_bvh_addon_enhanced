@@ -34,7 +34,7 @@ New features:
 
 ### Install
 
-1. download a release version .zip from: https://github.com/walkoncross/blender_bvh_addon_enhanced/releases; (OR: git clone this repo and make a zip file (blender_bvh_addon_enhanced.zip) from ./);
+1. download a release version .zip from: https://github.com/walkoncross/blender_bvh_addon_enhanced/io_anim_bvh_enhanced.zip; (OR: git clone this repo and make a zip file (io_anim_bvh_enhanced.zip) from ./io_anim_bvh_enhanced);
 
 2. Blender -> Edit -> Perferences -> Add-ons -> Install, get the path of io_anim_bvh_enhanced.zip, install and **enable** the add-on
 
