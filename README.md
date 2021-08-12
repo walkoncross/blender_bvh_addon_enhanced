@@ -1,5 +1,12 @@
 # Enhanced bvh add-on (importer/exporter) for blender
 
+- [Enhanced bvh add-on (importer/exporter) for blender](#enhanced-bvh-add-on-importerexporter-for-blender)
+  - [Enhanced bvh importer](#enhanced-bvh-importer)
+  - [Enhanced bvh exporter](#enhanced-bvh-exporter)
+  - [How to](#how-to)
+    - [Install](#install)
+    - [Load .bvh data onto an existing armature](#load-bvh-data-onto-an-existing-armature)
+
 **Author**: zhaoyafei0210@gmail.com
 
 **github repo**: https://github.com/walkoncross/blender_bvh_addon_enhanced
@@ -48,7 +55,7 @@ New features:
 
 ![enhanced_bvh_exporter_menu](/docs/enhanced_bvh_exporter_menu.jpg)
 
-### Load onto an existing armature
+### Load .bvh data onto an existing armature
 1. Select an existing armature object
 2. File -> Import -> Motion Capture (.bvh), enhanced
 3. Make settings
